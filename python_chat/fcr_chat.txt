@@ -1,0 +1,29 @@
+用python编程（不用运行）
+
+你需要包含 import warnings
+warnings.filterwarnings("ignore") 语法。涉及循环的部分需要用进度条（tqdm）。
+
+在C:\Download路径下有两个txt文件：
+
+碳列表：“carbon_list.txt”
+不确定性列表：“uncertainty_list.txt”
+
+各自有一系列关键词，用“，”或“、”分隔开，并且去掉重复的，分别存为列表备用
+
+还有一个“csr_report.xlsx”，包括三个变量：
+
+Variable      Storage   Display    Value
+    name         type    format    label      Variable label
+-------------------------------------------------------------------------
+Stkcd           double  %10.0g                股票代码
+year            float   %10.0g                年份
+CSR_text        strL    %9s                   企业CSR报告全文
+------------------------------------------------------------------------
+
+其中CSR_text变量存储了需要做文本分析的文本。每个句子之间的分隔以“。”作为间隔。用jieba分词.
+
+定义一个碳不确定句子是指，一个句子中同时包含了碳列表中的任意一个词和不确定性列表列表中的任意一个词。
+1、定义FCRS，是指碳不确定句子的数量，除以句子的数量。每行得到一个值。
+2、定义FCRW，是指在碳不确定句子的“不确定性列表”中的词语总数，除以全部词语总数。每行得到一个值。
+
+最后删除CSR_text列，得到fcr.csv。

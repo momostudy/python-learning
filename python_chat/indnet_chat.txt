@@ -1,0 +1,106 @@
+u ini_holder_detail_2023, clear 
+keep if HoldProportion >= 5 & regexm(EndDate,"-12-31")
+keep Stkcd year ShareHolderID HoldProportion
+bys Stkcd y: egen r = rank(H)
+bys Stkcd y: egen m = max(r)
+g Top1 = m == r
+keep S* y T
+ren Sh ID
+sa data, replace 
+
+/*
+用python编程（不用运行）
+
+设置全局路径为C:\Download
+
+你需要包含 import warnings
+warnings.filterwarnings("ignore") 语法。涉及循环的部分需要用进度条（tqdm）。
+
+在C:\Download路径下，导入data.dta文件
+
+
+Contains data from data.dta
+ Observations:       126,629                  
+    Variables:             4                  10 May 2024 18:00
+-------------------------------------------------------------------------------
+Variable      Storage   Display    Value
+    name         type    format    label      Variable label
+-------------------------------------------------------------------------------
+Stkcd           long    %10.0g                股票代码
+year            int     %10.0g                年份
+ID              double  %10.0g                机构持股机构ID
+Top1            float   %9.0g                 是否为第一大机构股东
+-------------------------------------------------------------------------------
+Sorted by: Stkcd  year
+
+先构建机构投资者网络。
+
+方程（1）：S_{i,n} = 1 if Institutional investor B_i holds the shares of firm F_n, otherwise 0.
+
+方程（2）：W = S \times S^T
+
+方程（3）：
+
+W=\left( \begin{array}{c}       
+0&w_{1,2}&\cdots&w_{1,j}\\ 
+w_{2,1}&0&\cdots&w_{2,j}\\ 
+\cdots&\cdots&\cdots&\cdots\\ 
+w_{i,1}&w_{i,2}&\cdots&0\\ 
+\end{array} \right)
+
+根据方程（1），when two institutional investors hold  the same listed firm at the end of the year, there is a link between the two institutional investors, and the edge value is set to one, thus creating a two-mode network S between the institutional investors and the listed company.
+根据方程（2），we use a reduced-mode approach to transform the bipartite network consisting of institutional investors and firms into an undirected unimodal network with institutions as nodes.
+根据方程（3），take the diagonal values in the institutional investor network matrix to be 0.
+S is a matrix of bimodal networks between institutional investors and listed companies,
+si,n is the element of matrix S
+W is a unimodal network with institutional investors as nodes.
+wi,j equals one when institutional investor i owns  a listed firm's shares at the same time as institutional investor j
+
+先基于上述网络，计算机构投资者的网络中心性指标，然后将第一大机构股东的网络中心性作为公司层面机构投资者的网络中心性指标。需要计算三个中心性指标（每个指标均逐年计算）：
+
+（1）度中心性（degree centrality）
+
+先使用方程（4）计算机构投资者i的中心性，然后用方程（5）归一化。
+
+方程（4）：De_i = \sum_{i \ne j}^N w_{ij}
+
+方程（5）：De_i^N = \frac{De_i-De_{\min}}{De_{\max}-De_{\min}}
+
+N is the total number of institutional investors (nodes) in the network
+wij is the element in the adjacency matrix W according to Equation (3), if xi,j=1, the two institutional investors invest in the same firm, while if xi,j=0 they do not.
+
+（2）中介中心性（betweenness centrality）
+
+方程（6）：Bet_i = \sum_{j \ne k} [g_{jk} (i) / g_{jk}]
+
+gjk(i) is the total number of shortest pathways passing through i between nodes j and k
+gjk is the total number of shortest paths between nodes j and k
+
+（3）特征向量中心性（eigenvector centrality）
+
+方程（7）：Evc_i = φ \sum_{i \ne j}^N w_{ij} Evc_j
+
+φ is a constant represented by the adjacency matrix's largest eigenvalue.
+
+
+最后我要得到的是包括Stkcd year degree_centrality betweenness_centrality eigenvector_centrality变量的数据集，保存到centrality.csv文件中。
+
+*/
+
+import delim centrality, case(preserve) clear 
+keep S y *ty
+order S y 
+so S y 
+ren (d b e) (DegCentral BetCentral EigCentral)
+la var D 企业机构网络中心性：度中心性
+la var B 企业机构网络中心性：中介中心性
+la var E 企业机构网络中心性：特征向量中心性
+keep if y >= 2003
+sa 企业机构网络中心性, replace 
+d 
+ta y 
+su 
+cor D B E
+
+
+

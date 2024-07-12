@@ -1,0 +1,229 @@
+用python编程（不用运行）
+
+你需要包含 import warnings
+warnings.filterwarnings("ignore") 语法。涉及循环的部分需要用进度条（tqdm）。
+
+在C:\Download路径下有个txt文件：
+
+stopwords_cn.txt
+
+作为停止词表，导入并转换为列表格式。
+
+还有一系列dta文件：
+
+QA2010.dta
+QA2011.dta
+...
+QA2023.dta
+
+
+每个dta的结构均如下：
+---------------------------------------------------------------------
+Variable      Storage   Display    Value
+    name         type    format    label      Variable label
+---------------------------------------------------------------------
+Stkcd           long    %10.0g                股票代码
+year            int     %10.0g                
+From            str18   %18s                  数据来源
+Coname          str12   %12s                  公司简称
+Usertp          str12   %12s                  浏览用户/注册用户
+Usernm          str63   %63s                  用户名
+Qtm             str16   %16s                  提问时间
+Qsubj           str706  %706s                 提问内容
+Wpaonot         str9    %9s                   上市公司是否回复
+Recvtm          str16   %16s                  回复时间
+Reply           strL    %9s                   回复内容
+Words1          int     %10.0g                字数1
+Words2          int     %10.0g                字数2
+---------------------------------------------------------------------
+
+每次导入一个QA{}.dta文件（{}=2010,...,2023），进行以下运算。算完一个再导入下一个，节约内存：
+
+{
+
+参考Wu等（2022），Zhao等（2023）将Quality定义为投资者帖子与相应回复之间的Quality，然后对每个Stkcd,year求均值。
+
+求Quality的详细方法：
+
+- 用Python中的Jieba对帖子（Qsubj）和回复（Reply）进行分词
+- 删除停止词
+- 用向量空间模型(VSM)技术来生成向量
+- 帖子Post = (q1, q2，…，qn)
+- 回复Reply = (r1, r2，…，rn)
+- n是帖子（来自投资者）和回复（来自公司）中出现的非重复单词的数量
+- 向量中的元素qi和ri是每个单词出现在文档中的频率
+- 用软余弦相似度公式来衡量问题和回答之间的文本相关性
+- Quality = \frac{\vec{Post} \times \vec{Reply}}{|\vec{Post}| \times |\vec{Reply}|}
+
+此外还需要计算其他测度：
+
+- 从问题和回答中删除相同的句子，并重新计算软余弦相似度作为交互质量的度量 Quality2
+- 回复率 Response：回复数（Wpaonot为1的数量）与帖子数之比
+- 及时性 Timeliness：回复帖子所需时间（回复时间减去提问时间）的自然对数的倒数，然后对每个Stkcd,year求均值
+- 细节性 Detailed：回复字数1除以提问内容字数，然后对每个Stkcd,year求均值
+- 可读性 Readability：回复字数1除以所含停止词的数量，然后对每个Stkcd,year求均值
+
+最后保留Stkcd,year,Quality,Quality2,Response,Timeliness,Detailed,Readability
+对Stkcd,year降重
+导出为Quality{}.csv文件（{}=2010,...,2023）
+
+}
+
+最后合并所有的Quality{}.csv文件，得到Quality_combined.csv文件。
+
+
+
+
+
+目前我的代码为：
+
+import pandas as pd
+import numpy as np
+import jieba
+from tqdm import tqdm
+import warnings
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+import os
+from datetime import datetime
+
+warnings.filterwarnings("ignore")
+
+# 导入停止词表
+with open("C:\\Download\\stopwords_cn.txt", "r", encoding="utf-8") as f:
+    stopwords = f.read().splitlines()
+
+# 函数：处理文本，分词并删除停止词
+def process_text(text):
+    words = jieba.cut(text)
+    words_filtered = [word for word in words if word not in stopwords]
+    return " ".join(words_filtered)
+
+# 函数：计算文本向量和相似度
+def compute_cosine_similarity(text1, text2):
+    vectorizer = CountVectorizer()
+    corpus = [text1, text2]
+    vectors = vectorizer.fit_transform(corpus).toarray()
+    return cosine_similarity(vectors[0].reshape(1, -1), vectors[1].reshape(1, -1))[0][0]
+
+def safe_timeliness(row):
+    try:
+        qt_time = datetime.strptime(row['Qtm'], "%Y-%m-%d %H:%M:%S")
+        rt_time = datetime.strptime(row['Recvtm'], "%Y-%m-%d %H:%M:%S")
+        seconds_diff = (rt_time - qt_time).total_seconds()
+        if seconds_diff > 0:  # 避免非正时间差
+            return 1 / np.log(seconds_diff + 1)
+        else:
+            return np.nan  # 如果时间差非正，返回NaN
+    except ValueError:
+        return np.nan  # 如果时间格式不正确，返回NaN
+def remove_common_sentences(text1, text2):
+    sentences1 = set(text1.split('.'))
+    sentences2 = set(text2.split('.'))
+    filtered_text1 = ' '.join(sentences1 - sentences2)
+    filtered_text2 = ' '.join(sentences2 - sentences1)
+    return filtered_text1, filtered_text2
+
+# 函数：计算质量Quality和Quality2
+def calculate_qualities(row):
+    text1 = row['processed_Qsubj']
+    text2 = row['processed_Reply']
+    quality = compute_cosine_similarity(text1, text2)
+    
+    text1_new, text2_new = remove_common_sentences(text1, text2)
+    quality2 = compute_cosine_similarity(text1_new, text2_new)
+    
+    return quality, quality2
+
+# 初始化一个空的DataFrame来存储结果
+final_df = pd.DataFrame()
+
+# 使用tqdm进度条处理每个年份的数据文件
+for year in tqdm(range(2010, 2024), desc="Year Progress", position=0):
+    # 加载数据
+    df = pd.read_stata(f"C:\\Download\\QA{year}.dta")
+    
+    # 显示内部处理的进度
+    tqdm.pandas(desc="Processing Rows", position=0)
+    df['processed_Qsubj'] = df['Qsubj'].progress_apply(process_text)
+    df['processed_Reply'] = df['Reply'].progress_apply(process_text)
+    
+    # 计算Quality和Quality2
+    df['Quality'], df['Quality2'] = zip(*df.progress_apply(calculate_qualities, axis=1))
+
+    # 回复率：回复数与帖子数之比
+    df['Response'] = df['Wpaonot'].apply(lambda x: 1 if x == '已回复' else 0).mean()
+
+    # 及时性：回复帖子所需时间的自然对数的倒数
+    df['Timeliness'] = df.apply(safe_timeliness, axis=1)
+
+    # 细节性：回复字数与提问内容字数比
+    df['Detailed'] = df['Words2'] / df['Words1']
+
+    # 可读性：回复字数与停止词数量的比
+    df['Readability'] = df['Words2'] / df['processed_Reply'].apply(lambda x: len([word for word in x.split() if word in stopwords]))
+
+    # 按照Stkcd, year分组，并计算各组的均值
+    group_df = df.groupby(['Stkcd', 'year']).agg({
+        'Quality': 'mean',
+        'Quality2': 'mean',  # 需要添加Quality2的计算逻辑
+        'Response': 'mean',
+        'Timeliness': 'mean',
+        'Detailed': 'mean',
+        'Readability': 'mean'
+    }).reset_index()
+
+    # 保存每年的数据到CSV文件
+    group_df.to_csv(f"C:\\Download\\Quality{year}.csv", index=False)
+    
+    # 合并年度数据
+    final_df = pd.concat([final_df, group_df])
+
+# 保存最终合并的数据
+final_df.to_csv("C:\\Download\\Quality_combined.csv", index=False)
+
+基于以下要求修改代码，并给我新的完整代码：
+
+
+1、
+    # 回复率：回复数与帖子数之比
+    df['Response'] = df['Wpaonot'].apply(lambda x: 1 if x == '已回复' else 0).mean()
+这里不需要求平均，只需要'已回复'赋值为1，其他为0即可。
+
+2、
+def safe_timeliness(row):
+    try:
+        qt_time = datetime.strptime(row['Qtm'], "%Y-%m-%d %H:%M:%S")
+        rt_time = datetime.strptime(row['Recvtm'], "%Y-%m-%d %H:%M:%S")
+        seconds_diff = (rt_time - qt_time).total_seconds()
+        if seconds_diff > 0:  # 避免非正时间差
+            return 1 / np.log(seconds_diff + 1)
+        else:
+            return np.nan  # 如果时间差非正，返回NaN
+    except ValueError:
+        return np.nan  # 如果时间格式不正确，返回NaN
+		
+		
+    df['Timeliness'] = df.apply(safe_timeliness, axis=1)
+
+这里修改为，只计算'Wpaonot'为'已回复'的Timeliness。此外如果时间差非正或格式不正确，则返回为0
+
+3、
+
+    # 细节性：回复字数与提问内容字数比
+    df['Detailed'] = df['Words2'] / df['Words1']
+
+这里带入的值不对，回复字数是Words1的值，提问字数为Qsubj中的字数。
+
+4、
+    # 可读性：回复字数与停止词数量的比
+    df['Readability'] = df['Words2'] / df['processed_Reply'].apply(lambda x: len([word for word in x.split() if word in stopwords]))
+
+这里带入的值不对，回复字数是Words1的值，停止词数量要从原始的Reply变量中找，而不是processed_Reply。
+
+
+
+
+
+
+

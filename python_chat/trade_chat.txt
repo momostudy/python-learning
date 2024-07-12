@@ -1,0 +1,30 @@
+用python编程（不用运行）
+
+设置全局路径为C:\Download
+
+你需要包含 import warnings
+warnings.filterwarnings("ignore") 语法。涉及循环的部分需要用进度条（tqdm）。
+
+在C:\Download路径下：
+- 导入关键词表（用空格隔开的）：
+-- 贸易词表：“trade_words.txt”
+-- 不确定词表：“uncer_words.txt”
+- 导入“prov_news.dta”其中包含变量prov、news
+- 循环导入“新闻基本信息表2000.dta”“新闻基本信息表2001.dta”……“新闻基本信息表2023.dta”，仅保留变量DeclareDate、NewsContent、NewsSource，用NewsSource和news匹配取交集，将所有文件最后匹配成功的部分合并为A。
+- 取DeclareDate的前4位为年份year，转换为数值，删除DeclareDate。
+- 用jieba对A的NewsContent分词，用word2vec扩展贸易词表和不确定词表，并导出扩展后贸易词表和扩展后不确定词表到C:\Download。
+- 对NewsContent文本分析，保留至少包含一个扩展后贸易词表的词的观测
+- 对NewsContent文本分析，设置变量f，若至少包含一个扩展后不确定词表则为1，否则为0
+- 对于每个year,prov，求f的均值（命名为TPU），去重
+- 保留year,prov,TPU
+- 导出为TPU.csv文件
+
+
+
+
+
+
+
+
+
+

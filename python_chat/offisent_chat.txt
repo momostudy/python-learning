@@ -1,0 +1,42 @@
+用python编程（不用运行）
+
+设置全局路径为C:\Download
+
+你需要包含 import warnings
+warnings.filterwarnings("ignore") 语法。涉及循环的部分需要用进度条（tqdm）。
+
+在C:\Download路径下有xlsx文件："工作-报告-地级市.xlsx"
+仅保留这三列：年份、地区、报告全文。其中，“报告全文”是需要进行文本分析的列。
+
+用jieba分词，并且载入停止词列表：
+
+with open('stopwords_cn.txt', 'r', encoding='utf-8') as f:
+    stopwords = set(f.read().splitlines())
+
+将报告全文分成段落（基于换行符），计算每个段落的情感得分。情感得分涉及到积极词和消极词列表，导入如下：
+
+pos_words = pd.read_excel('中文金融情感词典_姜富伟等(2020).xlsx', sheet_name='positive', header=None)[0]
+pos_words = [word.strip() for word in pos_words.tolist()]
+neg_words = pd.read_excel('中文金融情感词典_姜富伟等(2020).xlsx', sheet_name='negative', header=None)[0]
+neg_words = [word.strip() for word in neg_words.tolist()]
+
+计算公式为：
+
+words = [word for word in jieba.cut(text) if word not in stopwords]
+pos_count = sum(word in pos_words for word in words)
+neg_count = sum(word in neg_words for word in words)
+total_count = len(words)
+tone = (pos_count - neg_count) / total_count + 1 if total_count > 0 else 1
+
+注意，你需要每个段落都计算一个tone。计算所有段落的tone的中位数，生成新变量OfficialSenti。
+
+重命名年份、地区为year、city，保留year、city、OfficialSenti列，去重，最后输出OfficialSenti.csv文件。
+
+
+
+
+
+
+
+
+

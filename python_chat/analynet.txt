@@ -1,0 +1,27 @@
+用python编程（不用运行）
+
+你需要包含 import warnings
+warnings.filterwarnings("ignore") 语法。涉及循环的部分需要用进度条（tqdm）。
+设定默认路径为C:\Download
+
+在C:\Download路径下有dta文件：
+
+Contains data from A.dta
+ Observations:       168,413                  
+    Variables:             3                  20 Aug 2024 10:03
+--------------------------------------------------------------------------------------------
+Variable      Storage   Display    Value
+    name         type    format    label      Variable label
+--------------------------------------------------------------------------------------------
+Stkcd           long    %10.0g                证券代码
+year            int     %10.0g                
+AnanmID         str134  %134s                 分析师ID
+--------------------------------------------------------------------------------------------
+
+其中，AnanmID列的每行有若干个分析师ID以“,”链接，例如“30000000000000095320,30000000000000095425,30000000000000095180”。在同一个单元格的ID视为有合作关系。
+
+分析师协作网络是按年构建的，具体如下：For each year, we establish an n by n adjacency matrix A, where each row i and column j represent an active analyst (i.e., an analyst who issues at least one research report) in that year. We let cell ai,j take the value of one if analysts i and j have a collaboration relationship in that year and 0 otherwise. Since the collaboration relationships are undirected in this study, matrix A is symmetric, with the diagonal always equal to zero.
+
+然后在Stkcd-year维度（即每个Stkcd,year只有一个观测值）构建一些中心度指标，包括degree, closeness, and betweenness。
+
+最后得到仅包括Stkcd,year,degree,closeness, betweenness五列的数据集，输出为B.csv。

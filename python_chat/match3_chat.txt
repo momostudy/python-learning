@@ -1,0 +1,67 @@
+用python编程（不用运行）
+
+你需要包含 import warnings
+warnings.filterwarnings("ignore") 语法。涉及循环的部分需要用进度条（tqdm）。
+设定默认路径为“C:\Users”
+
+在C:\Users路径下有dta文件：T1P0.dta（处理组文件）、T0P0.dta（对照组文件）
+
+Contains data from T1P0.dta
+ Observations:            55                  
+    Variables:            16                  23 Aug 2024 10:17
+----------------------------------------------------------------------------
+Variable      Storage   Display    Value
+    name         type    format    label      Variable label
+----------------------------------------------------------------------------
+Stkcd           long    %10.0g                证券代码
+year            int     %10.0g                
+Age             byte    %10.0g                年龄
+Female          byte    %9.0g                 
+Post            byte    %9.0g                 
+Treat           byte    %9.0g                 
+Edu             byte    %9.0g                 
+ROA             double  %10.0g                总资产净利润率
+Size            float   %9.0g                 
+Lev             float   %9.0g                 
+MB              float   %9.0g                 
+Grow            float   %9.0g                 
+Inst            float   %9.0g                 
+Follow          float   %9.0g                 
+Tenure          float   %9.0g                 
+Ind             byte    %8.0g      Ind        
+----------------------------------------------------------------------------
+
+Contains data from T0P0.dta
+ Observations:         3,867                  
+    Variables:            16                  23 Aug 2024 10:17
+----------------------------------------------------------------------------
+Variable      Storage   Display    Value
+    name         type    format    label      Variable label
+----------------------------------------------------------------------------
+Stkcd           long    %10.0g                证券代码
+year            int     %10.0g                
+Age             byte    %10.0g                年龄
+Female          byte    %9.0g                 
+Post            byte    %9.0g                 
+Treat           byte    %9.0g                 
+Edu             byte    %9.0g                 
+ROA             double  %10.0g                总资产净利润率
+Size            float   %9.0g                 
+Lev             float   %9.0g                 
+MB              float   %9.0g                 
+Grow            float   %9.0g                 
+Inst            float   %9.0g                 
+Follow          float   %9.0g                 
+Tenure          float   %9.0g                 
+Ind             byte    %8.0g      Ind        
+----------------------------------------------------------------------------
+
+对“对照组文件”中的全部变量重命名，后面加一个0，例如Age变为Age0等等。
+
+要求，对year==year0,Ind==Ind0的范围进行匹配对照组，匹配分数的计算涉及 Age Female ... Tenure，
+也就是用这些变量算一个分数，即 score = abs(Age0-Age)+abs(Female0-Female)+...+abs(Tenure0-Tenure)。
+
+一共分三轮（设轮数为Round=1,2,3），要不放回匹配，与每个处理组观测score最低的对照组视为成功匹配，
+然后要把这些匹配结果保存下来（只包括Stkcd,year,Stkcd0,Round），
+每次要把匹配过的对照组从对照组文件移除。
+最后保存的文件中，(Stkcd,year)没有重复、(Stkcd0,year)也没有重复。最后匹配的文件输出为P0.csv。

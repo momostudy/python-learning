@@ -1,0 +1,25 @@
+用python编程（不用运行）
+
+你需要包含 import warnings
+warnings.filterwarnings("ignore") 语法。涉及循环的部分需要用进度条（tqdm）。
+设定默认路径为C:\Download
+
+有一个数据集 ini.csv，包含以下变量：     
+------------------------------------------------------------------------------
+Variable      Storage   Display    Value
+    name         type    format    label      Variable label
+------------------------------------------------------------------------------
+Stkcd           long    %10.0g                股票代码
+id              double  %10.0g                持股机构ID
+q               str7    %9s                   季度
+lambda          double  %10.0g                (max) HoldProportion
+------------------------------------------------------------------------------
+
+
+现在需要生成一个新变量 I。I is a dummy variable equal to 1 if institution j belongs to any institutional investor clique at the end of quarter q, and is 0 otherwise. 具体如下：
+
+Therefore, suppose we have N institutional investors in a particular quarter q. We are can construct an N x N matrix of institution-to-institution relationships, and define the off-diagonal element A(i,j) equal to 1 if institution i and j are connected, and 0 otherwise. Based on this institutional relationship network, we endeavor to identify the institutional clique in which every member is connected through any stock (Stkcd) to every other member.
+
+However, considering the size and complexity of the network, accurately identifying subgroups of highly interconnected nodes poses a challenging computational problem. Inspired by Crane et al. (2019), we use the Louvain algorithm developed by Blondel et al. (2008) to approximate the solution to the problem of extracting cliques from the network of institutional investors. [Identifying institutional cliques from the institutional network is a typical problem of community detection, which requires the partition of the network into communities of densely connected nodes. The quality of the partition is measured by the modularity, which is a scalar value between -1 and 1 that measures the density of links inside communities as compared to links between communities (Blondel et al., 2008). The Louvain algorithm is a heuristic method based on modularity optimization. Compared to other community detection algorithms, the Louvain algorithm significantly improves the computation speed. It only takes 153 minutes to identify a large network of 118 million nodes.] The algorithm allocates each institution to a specific clique, or to no clique at all at the end of each quarter.
+
+最后得到数据集包含id,q,I变量，对id,q降重后输出为I.csv。

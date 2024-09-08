@@ -1,0 +1,23 @@
+用python编程（不用运行）
+
+你需要包含 import warnings
+warnings.filterwarnings("ignore") 语法。涉及循环的部分需要用进度条（tqdm）。
+设定默认路径为C:\Download
+
+有3个数据集 BDT_MDAEmotAnal_1.xlsx BDT_MDAEmotAnal_2.xlsx BDT_MDAEmotAnal_3.xlsx，包含以下变量： 
+
+Stkcd           long    %10.0g                证券代码
+Enddate         str10   %10s                  统计截止日期
+ManaDiscAnal    strL    %9s                   管理层讨论与分析内容
+
+依次导入并拼接，根据Enddate得到年变量year和月变量mon，保留mon==12的样本。
+
+导入SCR_dict.xlsx的“供应链”、“宏观自然”、“宏观人为”、“微观”sheet，分别将第一列的每行数据导入为列表备用。这些是关键词列表。
+
+对ManaDiscAnal变量进行文本分析。根据中文句号“。”作为划分句子的依据。统计每行的句子总数为B。
+
+现在需要统计：对于每行，如果一个句子同时包含来自任意一个“供应链”列表的术语和任意一个“宏观自然”列表的术语，则该句子为“宏观自然”关键句，句子的总数为n1。类似地，如果一个句子同时包含来自任意一个“供应链”列表的术语和任意一个“宏观人为”列表的术语，则该句子为“宏观人为”关键句，句子的总数为n2。如果一个句子同时包含来自任意一个“供应链”列表的术语和任意一个“微观”列表的术语，则该句子为“微观”关键句，句子的总数为n3。
+
+在以上代码基础上，我想把macro_natural_terms和macro_human_terms的词汇合并为新的列表M，然后最终算出来的变量叫M；把macro_natural_terms，macro_human_terms，micro_terms的词汇合并为新的列表N，然后最终算出来的变量叫N。
+
+最后得到数据集仅保留Stkcd,year,B,n1,n2,n3,M,N变量，对Stkcd,year降重后输出为SCR2.csv。

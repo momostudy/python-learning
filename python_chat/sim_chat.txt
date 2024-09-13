@@ -1,0 +1,21 @@
+用python编程（不用运行）
+
+你需要包含 import warnings
+warnings.filterwarnings("ignore") 语法。涉及循环的部分需要用进度条（tqdm）。
+设定默认路径为C:\Download
+
+有数据集 STK_LISTEDCOINFOANL.xlsx，包含以下变量： 
+
+Symbol          long    %10.0g                股票代码               
+EndDate         str10   %10s                  统计截止日期
+BusinessScope   strL    %9s                   经营范围
+
+导入这个数据集（跳过第2行和第3行）。
+将Symbol重命名为Stkcd。
+从EndDate提取年份为year。
+
+现在需要对BusinessScope进行文本分析。
+
+先根据中英文逗号（,，）、句号（.。）、分号（;；）、左右括号“（）()”以及换行符，把段落分成短句，删除含有“不含”“排除”“除外”关键词的短句。使用Python中的Jieba对这些短句再进行切分，去除重复的词和停止词（停止词通过导入stopwords_cn.txt得到），创建构建每个企业（Stkcd）的年度经营业务向量。如果业务项X存在于公司i的运营业务数据集中，则该业务项对应的向量元素被赋值为1，否则设为0，形成每个企业的年度经营业务向量P_{i,t}。最后计算同一年样本内任意两家公司（Stkcd和Stkcd2）的业务运营向量的余弦相似度：SIM_{i,j,t} = P_{i,t}·P_{j,t} / (||P_{i,t}|| · ||P_{j,t}||).
+
+想要得到的数据结构最终为：Stkcd, Stkcd2, year, SIM。仅保留这些变量，对Stkcd, Stkcd2, year降重后输出为SIM.csv。

@@ -1,0 +1,43 @@
+用python编程（不用运行）
+
+你需要包含 import warnings
+warnings.filterwarnings("ignore") 语法。涉及循环的部分需要用进度条（tqdm）。
+设定默认路径为C:\Download
+
+有两个dta数据集，分别包含以下变量：    
+
+Contains data from G2023.dta
+ Observations:        59,597                  
+    Variables:             3                  26 Sep 2024 14:12
+---------------------------------------------------------------------------------------
+Variable      Storage   Display    Value
+    name         type    format    label      Variable label
+---------------------------------------------------------------------------------------
+Stkcd           long    %10.0g                证券代码（公司）
+year            int     %10.0g                
+G               float   %9.0g                 研发库存
+---------------------------------------------------------------------------------------
+
+Contains data from Ev2023.dta
+ Observations:       257,941                  
+    Variables:             4                  26 Sep 2024 14:31
+---------------------------------------------------------------------------------------
+Variable      Storage   Display    Value
+    name         type    format    label      Variable label
+---------------------------------------------------------------------------------------
+Stkcd           long    %10.0g                证券代码（公司）
+year            int     %10.0g                
+E               int     %10.0g                国民经济行业分类码（行业）
+v               float   %9.0g                 销售份额
+---------------------------------------------------------------------------------------
+
+现在需要每年（t，即year）对每个公司对（firm pairs）（i,j）计算变量：
+
+w_{ij} = \sum_{k=1}^K v_{ik}v_{jk} / sqrt(\sum_{k=1}^K v_{ik}^2) / sqrt(\sum_{k=1}^K v_{jk}^2)，
+其中v是每个公司该年在该行业的销售份额，
+\sum_{k=1}^K 表示对所有行业（E）进行汇总。该变量需要逐年计算。
+
+然后计算每个公司每年的TPP_{i,t} = ln(1+(1/G_{i,t})*\sum^{i \ne j} w_{ij} \times G_{j,t})，
+其中G为研发库存。该变量需要逐年计算。
+
+最后得到数据集包含Stkcd,year,TPP变量，对Stkcd,year降重后输出为TPP.csv。

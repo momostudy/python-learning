@@ -1,0 +1,45 @@
+用python编程（不用运行）
+
+你需要包含 import warnings
+warnings.filterwarnings("ignore") 语法。涉及循环的部分需要用进度条（tqdm）。
+设定默认路径为C:\Download
+
+有3个数据集 ：
+ManaDiscAnal_2010_2014.xlsx
+ManaDiscAnal_2015_2019.xlsx
+ManaDiscAnal_2020_2023.xlsx
+
+包含以下变量： 
+
+证券代码[Symbol] 
+证券简称[ShortName] 
+统计截止日期[Enddate] 
+管理层讨论与分析内容[ManaDiscAnal]
+
+对所有3个数据集进行以下操作：
+
+导入数据集（跳过第2行和第3行）。
+将Symbol重命名为Stkcd。
+从Enddate提取年份为year，提取月份为mon，并且仅保留月份为12的样本。
+
+现在需要对ManaDiscAnal进行文本分析。将每行ManaDiscAnal中的换行符、空格、tab等所有空白字符删除。用“。”作为划分句子的依据。
+
+阅读以下文本：
+
+In Step (1), we extract the text content from the “Possible Risks” section of the “Management's Discussion and Analysis (MD&A)” in the annual reports, as well as the textual content from the “Significant Risk Warning” section of the annual report. These risks may include policy, industry-specific, exchange rate, raw material price, and supply risks. This study places particular emphasis on the text content related to human capital risk in this section.
+
+In Step (2), we use the keywords below: 
+
+Lists	Keywords【注：只保留其中的中文字符作为关键词查询依据】
+List (1)	guan jian(关键), he xin(核心), zhong yao(重要), jie chu(杰出), you xiu(优秀), zhuan ye(专业), jing zhan(精湛), shu lian(熟练), cheng shu(成熟), shan chang(擅长), jing yan feng fu(经验丰富), fu you jing yan(富有经验), zi ge(资格), zi shen(资深), ding jian(顶尖), ba jian(拔尖), jing ying(精英), ling jun(领军), yi liu(一流), gao duan(高端), gao ji(高级), gao zhong ji(高中级), gao ceng ci(高层次), gao su zhi(高素质), gao xue li(高学历), gao shui ping(高水平), gao jing jian(高精尖), gao ji neng(高技能), gao ji xiao(高绩效), fu he xing(复合型), fu he xing(复合性), zong he xing(综合型), zhuan ye xing(专业型), zhuan jia xing(专家型), shi yong xing(实用型), zhi shi xing(知识型), chuang xin xing(创新型), kua xue ke(跨学科), yi zhuan duo neng(一专多能), de cai jian bei(德才兼备), du dang yi mian(独当一面)
+
+List (2)	ren li(人力), ren yuan(人员), yuan gong(员工), zhi gong(职工), gong ren(工人), ren li zi ben(人力资本), ren li zi yuan(人力资源), tuan dui(团队), ren cai dui wu(人才队伍), ren cai zi yuan(人才资源), ren cai(人才), gu gan(骨干), zhuan jia(专家), ke ji ren cai(科技人才), yan fa ren cai(研发人才), yan fa ren yuan(研发人员), ji shu gu gan(技术骨干), ji shu ren cai(技术人才), ji shu ren yuan(技术人员), guan li ren cai(管理人才), guan li ren yuan(管理人员), guan li ceng(管理层), jin rong ren cai(金融人才), ying xiao ren cai(营销人才), ying xiao ren yuan(营销人员), xiao shou ren yuan(销售人员), ye wu ren yuan(业务人员)
+
+List (3)	kui fa(匮乏), jin que(紧缺), duan que(短缺), xi que(稀缺), qian que(欠缺), que fa(缺乏), que shi(缺失), que kou(缺口), que shao(缺少), bu. zu(不足), duan ceng(断层), duan dang(断档), ji xu(急需), zhao pin(招聘), zhao mu(招募), zhao lan(招揽), pin yong(聘用), yin jin(引进), yin ren(引人), xi yin(吸引), yin ru(引入), wai yin(外引), xi shou(吸收), xi na(吸纳), huo de(获得), bu. chong(补充), bao liu(保留), wan liu(挽留), liu cun(留存), liu zhu(留住), liu yong(留用), liu ren(留任), liu ren(留人), yong liu(用留), bao chi(保持), wei hu(维护), bao hu(保护), bian dong(变动), bian hua(变化), liu dong(流动), liu dong lv(流动率), liu shi(流失), liu shi lv(流失率), wai liu(外流), li zhi(离职), li kai(离开), li ren(离任), shi qu(失去), wa jiao(挖角), qiang duo(抢夺), zheng duo(争夺)
+
+In Step (3), using sentences as the unit of analysis instead of individual words. The text content in the “Possible Risks” section of MD&A is parsed into sentences. If a sentence contains any one of the words from the three word lists constructed in step (2), it is defined as mentioning risks related to human capital. Sentences containing negation words [wu(无), di(低), xiao(小), mei you(没有), bu. gao(不高), bu. da(不大)] are excluded, even if they meet the aforementioned condition.
+
+In Step (4), we define two proxy variables for firm-level human capital risk: (1) the total number of sentences containing keywords related to human capital risk (HCR_Total), and (2) the ratio of the number of sentences containing keywords related to human capital risk to the total number of sentences in the “Possible Risks” section of MD&A and “Significant Risk Warning” section (HCR_Ratio).
+
+
+得到的数据结构最终为：Stkcd, year, HCR_Total, HCR_Ratio。仅保留这些变量，对Stkcd, year降重后输出为HCR.csv（三个文件的汇总结果）。
